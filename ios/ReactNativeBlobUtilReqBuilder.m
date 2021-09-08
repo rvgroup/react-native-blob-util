@@ -66,8 +66,9 @@
                     [request setHTTPBody:postData];
                 }
                 // set content-length
+                //!!!
                 [mheaders setValue:[NSString stringWithFormat:@"%lu",[postData length]] forKey:@"Content-Length"];
-                [mheaders setValue:@"100-continue" forKey:@"Expect"];
+                //[mheaders setValue:@"100-continue" forKey:@"Expect"];
                 // appaned boundary to content-type
                 [mheaders setValue:[NSString stringWithFormat:@"multipart/form-data; boundary=%@", boundary] forKey:@"content-type"];
                 [request setHTTPMethod: method];
@@ -191,7 +192,9 @@
         void __block (^getFieldData)(id field) = ^(id field)
         {
             NSString * name = [field valueForKey:@"name"];
-            __block NSString * content = [field valueForKey:@"data"];
+            //!!!
+            //__block NSString * content = [field valueForKey:@"data"];
+            NSString * content = [field valueForKey:@"data"];
             NSString * contentType = [field valueForKey:@"type"];
             // skip when the form field `name` or `data` is empty
             if(content == nil || name == nil)
