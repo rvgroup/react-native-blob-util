@@ -3,6 +3,7 @@ export type ReactNativeBlobUtilConfig = {
   Progress: any,
   UploadProgress: any,
   fileCache : bool,
+  transformFile: boolean;
   path : string,
   appendExt : string,
   session : string,
@@ -64,3 +65,6 @@ export type ReactNativeBlobUtilStream = {
   _onEnd : () => void,
   _onError : () => void,
 }
+
+
+export type filedescriptor = { path: string, parentFolder: string, mimeType: string }

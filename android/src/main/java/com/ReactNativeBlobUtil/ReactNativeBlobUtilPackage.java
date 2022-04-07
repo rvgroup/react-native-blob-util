@@ -1,5 +1,7 @@
 package com.ReactNativeBlobUtil;
 
+import androidx.annotation.NonNull;
+
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.JavaScriptModule;
 import com.facebook.react.bridge.NativeModule;
@@ -13,8 +15,9 @@ import java.util.List;
 
 public class ReactNativeBlobUtilPackage implements ReactPackage {
 
+    @NonNull
     @Override
-    public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {
+    public List<NativeModule> createNativeModules(@NonNull ReactApplicationContext reactContext) {
         List<NativeModule> modules = new ArrayList<>();
         modules.add(new ReactNativeBlobUtil(reactContext));
         return modules;
@@ -24,8 +27,9 @@ public class ReactNativeBlobUtilPackage implements ReactPackage {
         return Collections.emptyList();
     }
 
+    @NonNull
     @Override
-    public List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
+    public List<ViewManager> createViewManagers(@NonNull ReactApplicationContext reactContext) {
         return Collections.emptyList();
     }
 

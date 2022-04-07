@@ -13,6 +13,7 @@ NSString *const AL_PREFIX = @"assets-library://";
 
 // fetch configs
 NSString *const CONFIG_USE_TEMP = @"fileCache";
+NSString *const CONFIG_TRANSFORM_FILE = @"transformFile";
 NSString *const CONFIG_FILE_PATH = @"path";
 NSString *const CONFIG_FILE_EXT = @"appendExt";
 NSString *const CONFIG_TRUSTY = @"trusty";

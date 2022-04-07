@@ -3,9 +3,12 @@ package com.ReactNativeBlobUtil;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 
+import java.util.Locale;
+
 class ReactNativeBlobUtilConfig {
 
     public Boolean fileCache;
+    public Boolean transformFile;
     public String path;
     public String appendExt;
     public ReadableMap addAndroidDownloads;
@@ -23,17 +26,18 @@ class ReactNativeBlobUtilConfig {
     ReactNativeBlobUtilConfig(ReadableMap options) {
         if (options == null)
             return;
-        this.fileCache = options.hasKey("fileCache") ? options.getBoolean("fileCache") : false;
+        this.fileCache = options.hasKey("fileCache") && options.getBoolean("fileCache");
+        this.transformFile = options.hasKey("transformFile") ? options.getBoolean("transformFile") : false;
         this.path = options.hasKey("path") ? options.getString("path") : null;
         this.appendExt = options.hasKey("appendExt") ? options.getString("appendExt") : "";
-        this.trusty = options.hasKey("trusty") ? options.getBoolean("trusty") : false;
-        this.wifiOnly = options.hasKey("wifiOnly") ? options.getBoolean("wifiOnly") : false;
+        this.trusty = options.hasKey("trusty") && options.getBoolean("trusty");
+        this.wifiOnly = options.hasKey("wifiOnly") && options.getBoolean("wifiOnly");
         if (options.hasKey("addAndroidDownloads")) {
             this.addAndroidDownloads = options.getMap("addAndroidDownloads");
         }
         if (options.hasKey("binaryContentTypes"))
             this.binaryContentTypes = options.getArray("binaryContentTypes");
-        if (this.path != null && path.toLowerCase().contains("?append=true")) {
+        if (this.path != null && path.toLowerCase(Locale.ROOT).contains("?append=true")) {
             this.overwrite = false;
         }
         if (options.hasKey("overwrite"))
@@ -43,8 +47,8 @@ class ReactNativeBlobUtilConfig {
         }
         this.key = options.hasKey("key") ? options.getString("key") : null;
         this.mime = options.hasKey("contentType") ? options.getString("contentType") : null;
-        this.increment = options.hasKey("increment") ? options.getBoolean("increment") : false;
-        this.auto = options.hasKey("auto") ? options.getBoolean("auto") : false;
+        this.increment = options.hasKey("increment") && options.getBoolean("increment");
+        this.auto = options.hasKey("auto") && options.getBoolean("auto");
         if (options.hasKey("timeout")) {
             this.timeout = options.getInt("timeout");
         }

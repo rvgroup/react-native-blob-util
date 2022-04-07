@@ -116,10 +116,11 @@
                 if([body hasPrefix:FILE_PREFIX]) {
                     __block NSString * orgPath = [body substringFromIndex:[FILE_PREFIX length]];
                     orgPath = [ReactNativeBlobUtilFS getPathOfAsset:orgPath];
+                    orgPath = [[NSURL URLWithString:orgPath] path];
                     if([orgPath hasPrefix:AL_PREFIX])
                     {
                         
-                        [ReactNativeBlobUtilFS readFile:orgPath encoding:nil onComplete:^(id content, NSString* code, NSString * err) {
+                        [ReactNativeBlobUtilFS readFile:orgPath encoding:nil transformFile:false onComplete:^(id content, NSString* code, NSString * err) {
                             if(err != nil)
                             {
                                 onComplete(nil, nil);
@@ -225,7 +226,7 @@
                         NSString * orgPath = [content substringFromIndex:[FILE_PREFIX length]];
                         orgPath = [ReactNativeBlobUtilFS getPathOfAsset:orgPath];
 
-                        [ReactNativeBlobUtilFS readFile:orgPath encoding:nil onComplete:^(NSData *content, NSString* code, NSString * err) {
+                        [ReactNativeBlobUtilFS readFile:orgPath encoding:nil transformFile:false onComplete:^(NSData *content, NSString* code, NSString * err) {
                             if(err != nil)
                             {
                                 onComplete(formData, YES);

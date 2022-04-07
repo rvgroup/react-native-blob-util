@@ -1,8 +1,9 @@
 package com.ReactNativeBlobUtil;
 
-import androidx.annotation.NonNull;
-
+import android.net.Uri;
 import android.util.Base64;
+
+import androidx.annotation.NonNull;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -19,15 +20,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-import android.net.Uri;
-
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okio.BufferedSink;
 
 class ReactNativeBlobUtilBody extends RequestBody {
 
-    private InputStream requestStream;
     private long contentLength = 0;
     private ReadableArray form;
     private String mTaskId;
@@ -72,12 +70,10 @@ class ReactNativeBlobUtilBody extends RequestBody {
         try {
             switch (requestType) {
                 case SingleFile:
-                    requestStream = getRequestStream();
-                    contentLength = requestStream.available();
+                    contentLength = getRequestStream().available();
                     break;
                 case AsIs:
                     contentLength = this.rawBody.getBytes().length;
-                    requestStream = new ByteArrayInputStream(this.rawBody.getBytes());
                     break;
                 case Others:
                     break;
@@ -99,13 +95,40 @@ class ReactNativeBlobUtilBody extends RequestBody {
         this.form = body;
         try {
             bodyCache = createMultipartBodyCache();
-            requestStream = new FileInputStream(bodyCache);
             contentLength = bodyCache.length();
         } catch (Exception ex) {
             ex.printStackTrace();
             ReactNativeBlobUtilUtils.emitWarningEvent("ReactNativeBlobUtil failed to create request multipart body :" + ex.getLocalizedMessage());
         }
         return this;
+    }
+
+    // This organizes the input stream initialization logic into a method. This allows:
+    // 1) Initialization to be deferred until it's needed (when we are ready to pipe it into the BufferedSink)
+    // 2) The stream to be initialized and used as many times as necessary. When okhttp runs into
+    //    a connection error, it will retry the request which will require a new stream to write into
+    //    the sink once again.
+    InputStream getInputStreamForRequestBody() {
+        try {
+            if (this.form != null) {
+                return new FileInputStream(bodyCache);
+            } else {
+                switch (requestType) {
+                    case SingleFile:
+                        return getRequestStream();
+                    case AsIs:
+                        return new ByteArrayInputStream(this.rawBody.getBytes());
+                    case Others:
+                        ReactNativeBlobUtilUtils.emitWarningEvent("ReactNativeBlobUtil could not create input stream for request type others");
+                        break;
+                }
+            }
+        } catch (Exception ex){
+            ex.printStackTrace();
+            ReactNativeBlobUtilUtils.emitWarningEvent("ReactNativeBlobUtil failed to create input stream for request:" + ex.getLocalizedMessage());
+        }
+
+        return null;
     }
 
     @Override
@@ -121,7 +144,7 @@ class ReactNativeBlobUtilBody extends RequestBody {
     @Override
     public void writeTo(@NonNull BufferedSink sink) {
         try {
-            pipeStreamToSink(requestStream, sink);
+            pipeStreamToSink(getInputStreamForRequestBody(), sink);
         } catch (Exception ex) {
             ReactNativeBlobUtilUtils.emitWarningEvent(ex.getLocalizedMessage());
             ex.printStackTrace();
@@ -145,9 +168,9 @@ class ReactNativeBlobUtilBody extends RequestBody {
         // upload from storage
         if (rawBody.startsWith(ReactNativeBlobUtilConst.FILE_PREFIX)) {
             String orgPath = rawBody.substring(ReactNativeBlobUtilConst.FILE_PREFIX.length());
-            orgPath = ReactNativeBlobUtilFS.normalizePath(orgPath);
+            orgPath = ReactNativeBlobUtilUtils.normalizePath(orgPath);
             // upload file from assets
-            if (ReactNativeBlobUtilFS.isAsset(orgPath)) {
+            if (ReactNativeBlobUtilUtils.isAsset(orgPath)) {
                 try {
                     String assetName = orgPath.replace(ReactNativeBlobUtilConst.FILE_PREFIX_BUNDLE_ASSET, "");
                     return ReactNativeBlobUtil.RCTContext.getAssets().open(assetName);
@@ -155,7 +178,7 @@ class ReactNativeBlobUtilBody extends RequestBody {
                     throw new Exception("error when getting request stream from asset : " + e.getLocalizedMessage());
                 }
             } else {
-                File f = new File(ReactNativeBlobUtilFS.normalizePath(orgPath));
+                File f = new File(ReactNativeBlobUtilUtils.normalizePath(orgPath));
                 try {
                     if (!f.exists())
                         f.createNewFile();
@@ -187,7 +210,7 @@ class ReactNativeBlobUtilBody extends RequestBody {
      * Create a temp file that contains content of multipart form data content
      *
      * @return The cache file object
-     * @throws IOException
+     * @throws IOException .
      */
     private File createMultipartBodyCache() throws IOException {
         String boundary = "ReactNativeBlobUtil-" + mTaskId;
@@ -215,9 +238,9 @@ class ReactNativeBlobUtilBody extends RequestBody {
                 // upload from storage
                 if (data.startsWith(ReactNativeBlobUtilConst.FILE_PREFIX)) {
                     String orgPath = data.substring(ReactNativeBlobUtilConst.FILE_PREFIX.length());
-                    orgPath = ReactNativeBlobUtilFS.normalizePath(orgPath);
+                    orgPath = ReactNativeBlobUtilUtils.normalizePath(orgPath);
                     // path starts with content://
-                    if (ReactNativeBlobUtilFS.isAsset(orgPath)) {
+                    if (ReactNativeBlobUtilUtils.isAsset(orgPath)) {
                         try {
                             String assetName = orgPath.replace(ReactNativeBlobUtilConst.FILE_PREFIX_BUNDLE_ASSET, "");
                             InputStream in = ctx.getAssets().open(assetName);
@@ -228,7 +251,7 @@ class ReactNativeBlobUtilBody extends RequestBody {
                     }
                     // data from normal files
                     else {
-                        File file = new File(ReactNativeBlobUtilFS.normalizePath(orgPath));
+                        File file = new File(ReactNativeBlobUtilUtils.normalizePath(orgPath));
                         if (file.exists()) {
                             FileInputStream fs = new FileInputStream(file);
                             pipeStreamToFileStream(fs, os);
@@ -282,7 +305,7 @@ class ReactNativeBlobUtilBody extends RequestBody {
      *
      * @param stream The input stream
      * @param sink   The request body buffer sink
-     * @throws IOException
+     * @throws IOException .
      */
     private void pipeStreamToSink(InputStream stream, BufferedSink sink) throws IOException {
         byte[] chunk = new byte[10240];
@@ -332,9 +355,9 @@ class ReactNativeBlobUtilBody extends RequestBody {
                 // upload from storage
                 if (data.startsWith(ReactNativeBlobUtilConst.FILE_PREFIX)) {
                     String orgPath = data.substring(ReactNativeBlobUtilConst.FILE_PREFIX.length());
-                    orgPath = ReactNativeBlobUtilFS.normalizePath(orgPath);
+                    orgPath = ReactNativeBlobUtilUtils.normalizePath(orgPath);
                     // path starts with asset://
-                    if (ReactNativeBlobUtilFS.isAsset(orgPath)) {
+                    if (ReactNativeBlobUtilUtils.isAsset(orgPath)) {
                         try {
                             String assetName = orgPath.replace(ReactNativeBlobUtilConst.FILE_PREFIX_BUNDLE_ASSET, "");
                             long length = ctx.getAssets().open(assetName).available();
@@ -345,7 +368,7 @@ class ReactNativeBlobUtilBody extends RequestBody {
                     }
                     // general files
                     else {
-                        File file = new File(ReactNativeBlobUtilFS.normalizePath(orgPath));
+                        File file = new File(ReactNativeBlobUtilUtils.normalizePath(orgPath));
                         total += file.length();
                     }
                 } else if (data.startsWith(ReactNativeBlobUtilConst.CONTENT_PREFIX)) {

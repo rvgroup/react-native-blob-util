@@ -10,6 +10,7 @@
 #import "ReactNativeBlobUtil.h"
 #import "ReactNativeBlobUtilFS.h"
 #import "ReactNativeBlobUtilConst.h"
+#import "ReactNativeBlobUtilFileTransformer.h"
 #import "IOS7Polyfill.h"
 @import AssetsLibrary;
 
@@ -122,6 +123,10 @@ NSMutableDictionary *fileStreams = nil;
 
 + (NSString *) getPictureDir {
     return [NSSearchPathForDirectoriesInDomains(NSPicturesDirectory, NSUserDomainMask, YES) firstObject];
+}
+
++ (NSString *) getApplicationSupportDir {
+    return [NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) firstObject];
 }
 
 + (NSString *) getTempPath {
@@ -343,6 +348,7 @@ NSMutableDictionary *fileStreams = nil;
 + (void) writeFile:(NSString *)path
                     encoding:(NSString *)encoding
                     data:(NSString *)data
+                    transformFile:(BOOL)transformFile
                     append:(BOOL)append
                     resolver:(RCTPromiseResolveBlock)resolve
                     rejecter:(RCTPromiseRejectBlock)reject
@@ -390,6 +396,16 @@ NSMutableDictionary *fileStreams = nil;
         else {
             content = [data dataUsingEncoding:NSUTF8StringEncoding];
         }
+
+        if (transformFile) {
+            NSObject<FileTransformer>* fileTransformer = [ReactNativeBlobUtilFileTransformer getFileTransformer];
+            if (fileTransformer) {
+                content = [fileTransformer onWriteFile:content];
+            } else {
+                return reject(@"EUNSPECIFIED",@"Transform specified but transformer not set", nil);
+            }
+        }
+
         if(append == YES) {
             [fileHandle seekToEndOfFile];
             [fileHandle writeData:content];
@@ -484,6 +500,7 @@ NSMutableDictionary *fileStreams = nil;
 
 + (void) readFile:(NSString *)path
          encoding:(NSString *)encoding
+         transformFile:(BOOL) transformFile
        onComplete:(void (^)(NSData * content, NSString * codeStr, NSString * errMsg))onComplete
 {
     [[self class] getPathFromUri:path completionHandler:^(NSString *path, ALAssetRepresentation *asset) {
@@ -516,6 +533,22 @@ NSMutableDictionary *fileStreams = nil;
             }
             fileContent = [NSData dataWithContentsOfFile:path];
 
+        }
+
+        if (transformFile) {
+            NSObject<FileTransformer>* fileTransformer = [ReactNativeBlobUtilFileTransformer getFileTransformer];
+            if (fileTransformer) {
+                @try{
+                    fileContent = [fileTransformer onReadFile:fileContent];
+                } @catch (NSException * ex)
+                {
+                    onComplete(nil, @"EUNSPECIFIED", [NSString stringWithFormat:@"Exception on File Transformer: '%@' ", [ex description]]);
+                    return;
+                }
+            } else {
+                onComplete(nil, @"EUNSPECIFIED", @"Transform specified but transformer not set");
+                return;
+            }
         }
 
         if(encoding != nil)

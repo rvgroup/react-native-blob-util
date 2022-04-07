@@ -35,6 +35,11 @@ public class ReactNativeBlobUtilFileResp extends ResponseBody {
     FileOutputStream ofStream;
     boolean isEndMarkerReceived;
 
+    public ReactNativeBlobUtilFileResp(ResponseBody body) {
+        super();
+        this.originalBody = body;
+    }
+
     public ReactNativeBlobUtilFileResp(ReactApplicationContext ctx, String taskId, ResponseBody body, String path, boolean overwrite) throws IOException {
         super();
         this.rctContext = ctx;
@@ -67,6 +72,10 @@ public class ReactNativeBlobUtilFileResp extends ResponseBody {
 
     @Override
     public long contentLength() {
+        if (originalBody.contentLength() > Integer.MAX_VALUE) {
+            // This is a workaround for a bug Okio buffer where it can't handle larger than int.
+            return Integer.MAX_VALUE;
+        }
         return originalBody.contentLength();
     }
 

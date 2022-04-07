@@ -67,5 +67,5 @@ try {
     '\033[95mreact-native-blob-util\033[97m link \033[91mFAILED \033[97m\nCould not automatically link package :'+
     err.stack +
     'please follow the instructions to manually link the library : ' +
-    '\033[4mhttps://github.com/joltup/react-native-blob-util/wiki/Manually-Link-Package\n')
+    '\033[4mhttps://github.com/RonRadtke/react-native-blob-util/wiki/Manually-Link-Package\n')
 }

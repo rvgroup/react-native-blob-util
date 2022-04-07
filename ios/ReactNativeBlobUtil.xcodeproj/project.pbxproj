@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		8C4801A6200CF71700FED7ED /* ReactNativeBlobUtilRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 8C4801A5200CF71700FED7ED /* ReactNativeBlobUtilRequest.m */; };
+		9FD8D3C326F1736000009F35 /* ReactNativeBlobUtilFileTransformer.m in Sources */ = {isa = PBXBuildFile; fileRef = 9FD8D3C226F1736000009F35 /* ReactNativeBlobUtilFileTransformer.m */; };
 		A158F4271D052E49006FFD38 /* ReactNativeBlobUtilFS.m in Sources */ = {isa = PBXBuildFile; fileRef = A158F4261D052E49006FFD38 /* ReactNativeBlobUtilFS.m */; };
 		A158F42D1D0535BB006FFD38 /* ReactNativeBlobUtilConst.m in Sources */ = {isa = PBXBuildFile; fileRef = A158F42C1D0535BB006FFD38 /* ReactNativeBlobUtilConst.m */; };
 		A158F4301D0539DB006FFD38 /* ReactNativeBlobUtilNetwork.m in Sources */ = {isa = PBXBuildFile; fileRef = A158F42F1D0539DB006FFD38 /* ReactNativeBlobUtilNetwork.m */; };
@@ -32,6 +33,8 @@
 /* Begin PBXFileReference section */
 		8C4801A4200CF71700FED7ED /* ReactNativeBlobUtilRequest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReactNativeBlobUtilRequest.h; sourceTree = "<group>"; };
 		8C4801A5200CF71700FED7ED /* ReactNativeBlobUtilRequest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ReactNativeBlobUtilRequest.m; sourceTree = "<group>"; };
+		9FD8D3C126F1709A00009F35 /* ReactNativeBlobUtilFileTransformer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReactNativeBlobUtilFileTransformer.h; sourceTree = "<group>"; };
+		9FD8D3C226F1736000009F35 /* ReactNativeBlobUtilFileTransformer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ReactNativeBlobUtilFileTransformer.m; sourceTree = "<group>"; };
 		A158F4261D052E49006FFD38 /* ReactNativeBlobUtilFS.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ReactNativeBlobUtilFS.m; sourceTree = "<group>"; };
 		A158F4281D052E57006FFD38 /* ReactNativeBlobUtilFS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReactNativeBlobUtilFS.h; sourceTree = "<group>"; };
 		A158F4291D0534A9006FFD38 /* ReactNativeBlobUtilConst.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReactNativeBlobUtilConst.h; sourceTree = "<group>"; };
@@ -69,6 +72,8 @@
 		A15C30051CD25C330074CB35 = {
 			isa = PBXGroup;
 			children = (
+				9FD8D3C226F1736000009F35 /* ReactNativeBlobUtilFileTransformer.m */,
+				9FD8D3C126F1709A00009F35 /* ReactNativeBlobUtilFileTransformer.h */,
 				A19B48241D98102400E6868A /* ReactNativeBlobUtilProgress.m */,
 				A19B48231D98100800E6868A /* ReactNativeBlobUtilProgress.h */,
 				A1F950181D7E9134002A95A6 /* IOS7Polyfill.h */,
@@ -156,6 +161,7 @@
 				A166D1AA1CE0647A00273590 /* ReactNativeBlobUtil.h in Sources */,
 				8C4801A6200CF71700FED7ED /* ReactNativeBlobUtilRequest.m in Sources */,
 				A158F42D1D0535BB006FFD38 /* ReactNativeBlobUtilConst.m in Sources */,
+				9FD8D3C326F1736000009F35 /* ReactNativeBlobUtilFileTransformer.m in Sources */,
 				A158F4271D052E49006FFD38 /* ReactNativeBlobUtilFS.m in Sources */,
 				A158F4301D0539DB006FFD38 /* ReactNativeBlobUtilNetwork.m in Sources */,
 				A19B48251D98102400E6868A /* ReactNativeBlobUtilProgress.m in Sources */,

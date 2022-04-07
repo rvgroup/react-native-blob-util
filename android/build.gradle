@@ -1,5 +1,5 @@
 apply plugin: 'com.android.library'
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 
 def safeExtGet(prop, fallback) {
     rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
@@ -50,53 +50,32 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    lintOptions {
+        abortOnError false
+    }
     productFlavors {
     }
 }
 
 dependencies {
     implementation "com.facebook.react:react-native:${safeExtGet('reactNativeVersion', '+')}"
-    implementation 'com.squareup.okhttp3:okhttp:3.12.+'
-    implementation 'com.squareup.okhttp3:logging-interceptor:3.12.+'
-    implementation 'com.squareup.okhttp3:okhttp-urlconnection:3.12.+'
-}
-
-def configureReactNativePom(def pom) {
-    def packageJson = new groovy.json.JsonSlurper().parseText(file('../package.json').text)
-
-    pom.project {
-        name packageJson.title
-        artifactId packageJson.name
-        version = packageJson.version
-        group = "com.ReactNativeBlobUtil"
-        description packageJson.description
-        url packageJson.repository.baseUrl
-
-        licenses {
-            license {
-                name packageJson.license
-                url packageJson.repository.baseUrl + '/blob/master/' + packageJson.licenseFilename
-                distribution 'repo'
-            }
-        }
-
-        developers {
-            developer {
-                id packageJson.author.username
-                name packageJson.author.name
-            }
-        }
-    }
+    implementation 'org.apache.commons:commons-lang3:3.0'
 }
 
 afterEvaluate { project ->
+    // do this only when building this lib alone as a root project
+    if (project != rootProject) {
+        return
+    }
+
     // some Gradle build hooks ref:
     // https://www.oreilly.com/library/view/gradle-beyond-the/9781449373801/ch03.html
     task androidJavadoc(type: Javadoc) {
         source = android.sourceSets.main.java.srcDirs
-        classpath += files(android.bootClasspath)
-        classpath += files(project.getConfigurations().getByName('compile').asList())
-        include '**/*.java'
+        classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+        classpath += files(android.libraryVariants.collect { variant ->
+            variant.javaCompileProvider.get().classpath.files
+        })
     }
 
     task androidJavadocJar(type: Jar, dependsOn: androidJavadoc) {
@@ -106,8 +85,7 @@ afterEvaluate { project ->
 
     task androidSourcesJar(type: Jar) {
         classifier = 'sources'
-        from android.sourceSets.main.java.srcDirs
-        include '**/*.java'
+        from android.sourceSets.main.java.sourceFiles
     }
 
     android.libraryVariants.all { variant ->
@@ -124,12 +102,41 @@ afterEvaluate { project ->
         archives androidJavadocJar
     }
 
-    task installArchives(type: Upload) {
-        configuration = configurations.archives
-        repositories.mavenDeployer {
-            // Deploy to react-native-event-bridge/maven, ready to publish to npm
-            repository url: "file://${projectDir}/../android/maven"
-            configureReactNativePom pom
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                def packageJson = new groovy.json.JsonSlurper().parseText(file('../package.json').text)
+
+                artifactId packageJson.name
+                groupId = "com.ReactNativeBlobUtil"
+                version = packageJson.version
+
+                pom {
+                    name = packageJson.title
+                    description = packageJson.description
+                    url = packageJson.repository.baseUrl
+
+                    licenses {
+                        license {
+                            name = packageJson.license
+                            url = packageJson.repository.baseUrl + '/blob/master/' + packageJson.licenseFilename
+                            distribution = 'repo'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id = packageJson.author.username
+                            name = packageJson.author.name
+                        }
+                    }
+                }
+            }
+        }
+        repositories {
+            maven {
+                url = "file://${projectDir}/../android/maven"
+            }
         }
     }
 }

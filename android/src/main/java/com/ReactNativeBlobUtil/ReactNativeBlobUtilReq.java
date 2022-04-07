@@ -30,33 +30,27 @@ import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.net.ssl.SSLContext;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.net.Proxy;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.security.KeyStore;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.HashMap;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.SSLContext;
 
 import okhttp3.Call;
 import okhttp3.ConnectionPool;
@@ -93,6 +87,12 @@ public class ReactNativeBlobUtilReq extends BroadcastReceiver implements Runnabl
         BASE64
     }
 
+    private boolean shouldTransformFile() {
+        return this.options.transformFile &&
+            // Can only process if it's written to a file
+            (this.options.fileCache || this.options.path != null);
+    }
+
     public static HashMap<String, Call> taskTable = new HashMap<>();
     public static HashMap<String, Long> androidDownloadManagerTaskTable = new HashMap<>();
     static HashMap<String, ReactNativeBlobUtilProgressConfig> progressReport = new HashMap<>();
@@ -120,7 +120,7 @@ public class ReactNativeBlobUtilReq extends BroadcastReceiver implements Runnabl
     OkHttpClient client;
 
     public ReactNativeBlobUtilReq(ReadableMap options, String taskId, String method, String url, ReadableMap headers, String body, ReadableArray arrayBody, OkHttpClient client, final Callback callback) {
-        this.method = method.toUpperCase();
+        this.method = method.toUpperCase(Locale.ROOT);
         this.options = new ReactNativeBlobUtilConfig(options);
         this.taskId = taskId;
         this.url = url;
@@ -130,7 +130,9 @@ public class ReactNativeBlobUtilReq extends BroadcastReceiver implements Runnabl
         this.rawRequestBodyArray = arrayBody;
         this.client = client;
 
-        if (this.options.fileCache || this.options.path != null)
+        // If transformFile is specified, we first want to get the response back in memory so we can
+        // encrypt it wholesale and at that point, write it into the file storage.
+        if((this.options.fileCache || this.options.path != null) && !this.shouldTransformFile())
             responseType = ResponseType.FileStorage;
         else
             responseType = ResponseType.KeepInMemory;
@@ -196,7 +198,7 @@ public class ReactNativeBlobUtilReq extends BroadcastReceiver implements Runnabl
                     req.addRequestHeader(key, headers.getString(key));
                 }
                 // Attempt to add cookie, if it exists
-                URL urlObj = null;
+                URL urlObj;
                 try {
                     urlObj = new URL(url);
                     String baseUrl = urlObj.getProtocol() + "://" + urlObj.getHost();
@@ -311,14 +313,14 @@ public class ReactNativeBlobUtilReq extends BroadcastReceiver implements Runnabl
                         else if (value.equalsIgnoreCase("utf8"))
                             responseFormat = ResponseFormat.UTF8;
                     } else {
-                        builder.header(key.toLowerCase(), value);
-                        mheaders.put(key.toLowerCase(), value);
+                        builder.header(key.toLowerCase(Locale.ROOT), value);
+                        mheaders.put(key.toLowerCase(Locale.ROOT), value);
                     }
                 }
             }
 
             if (method.equalsIgnoreCase("post") || method.equalsIgnoreCase("put") || method.equalsIgnoreCase("patch")) {
-                String cType = getHeaderIgnoreCases(mheaders, "Content-Type").toLowerCase();
+                String cType = getHeaderIgnoreCases(mheaders, "Content-Type").toLowerCase(Locale.ROOT);
 
                 if (rawRequestBodyArray != null) {
                     requestType = RequestType.Form;
@@ -332,7 +334,7 @@ public class ReactNativeBlobUtilReq extends BroadcastReceiver implements Runnabl
                     if (rawRequestBody.startsWith(ReactNativeBlobUtilConst.FILE_PREFIX)
                             || rawRequestBody.startsWith(ReactNativeBlobUtilConst.CONTENT_PREFIX)) {
                         requestType = RequestType.SingleFile;
-                    } else if (cType.toLowerCase().contains(";base64") || cType.toLowerCase().startsWith("application/octet")) {
+                    } else if (cType.toLowerCase(Locale.ROOT).contains(";base64") || cType.toLowerCase(Locale.ROOT).startsWith("application/octet")) {
                         cType = cType.replace(";base64", "").replace(";BASE64", "");
                         if (mheaders.containsKey("content-type"))
                             mheaders.put("content-type", cType);
@@ -388,18 +390,21 @@ public class ReactNativeBlobUtilReq extends BroadcastReceiver implements Runnabl
             // #156 fix cookie issue
             final Request req = builder.build();
             clientBuilder.addNetworkInterceptor(new Interceptor() {
+                @NonNull
                 @Override
-                public Response intercept(Chain chain) throws IOException {
+                public Response intercept(@NonNull Chain chain) throws IOException {
                     redirects.add(chain.request().url().toString());
                     return chain.proceed(chain.request());
                 }
             });
             // Add request interceptor for upload progress event
             clientBuilder.addInterceptor(new Interceptor() {
+                @NonNull
                 @Override
                 public Response intercept(@NonNull Chain chain) throws IOException {
+                    Response originalResponse = null;
                     try {
-                        Response originalResponse = chain.proceed(req);
+                        originalResponse = chain.proceed(req);
                         ResponseBody extended;
                         switch (responseType) {
                             case KeepInMemory:
@@ -428,12 +433,21 @@ public class ReactNativeBlobUtilReq extends BroadcastReceiver implements Runnabl
                         return originalResponse.newBuilder().body(extended).build();
                     } catch (SocketException e) {
                         timeout = true;
+                        if (originalResponse != null) {
+                            originalResponse.close();
+                        }
                     } catch (SocketTimeoutException e) {
                         timeout = true;
+                        if (originalResponse != null) {
+                            originalResponse.close();
+                        }
                         //ReactNativeBlobUtilUtils.emitWarningEvent("ReactNativeBlobUtil error when sending request : " + e.getLocalizedMessage());
                     } catch (Exception ex) {
-
+                        if (originalResponse != null) {
+                            originalResponse.close();
+                        }
                     }
+
                     return chain.proceed(chain.request());
                 }
             });
@@ -457,7 +471,7 @@ public class ReactNativeBlobUtilReq extends BroadcastReceiver implements Runnabl
             call.enqueue(new okhttp3.Callback() {
 
                 @Override
-                public void onFailure(@NonNull Call call, IOException e) {
+                public void onFailure(@NonNull Call call, @NonNull IOException e) {
                     cancelTask(taskId);
                     if (respInfo == null) {
                         respInfo = Arguments.createMap();
@@ -551,6 +565,26 @@ public class ReactNativeBlobUtilReq extends BroadcastReceiver implements Runnabl
                     // response data directly pass to JS context as string.
                     else {
                         byte[] b = resp.body().bytes();
+                        // If process file option is turned on, we first keep response in memory and then stream that content
+                        // after processing
+                        if (this.shouldTransformFile()) {
+                            if (ReactNativeBlobUtilFileTransformer.sharedFileTransformer == null) {
+                                throw new IllegalStateException("Write file with transform was specified but the shared file transformer is not set");
+                            }
+                            this.destPath = this.destPath.replace("?append=true", "");
+                            File file = new File(this.destPath);
+                            if (!file.exists()) {
+                                file.createNewFile();
+                            }
+                            try (FileOutputStream fos = new FileOutputStream(file)) {
+                                fos.write(ReactNativeBlobUtilFileTransformer.sharedFileTransformer.onWriteFile(b));
+                            } catch(Exception e) {
+                                callback.invoke("Error from file transformer:" + e.getLocalizedMessage(), null);
+                                return;
+                            }
+                            callback.invoke(null, ReactNativeBlobUtilConst.RNFB_RESPONSE_PATH, this.destPath);
+                            return;
+                        }
                         if (responseFormat == ResponseFormat.BASE64) {
                             callback.invoke(null, ReactNativeBlobUtilConst.RNFB_RESPONSE_BASE64, android.util.Base64.encodeToString(b, Base64.NO_WRAP));
                             return;
@@ -708,7 +742,7 @@ public class ReactNativeBlobUtilReq extends BroadcastReceiver implements Runnabl
         boolean isCustomBinary = false;
         if (options.binaryContentTypes != null) {
             for (int i = 0; i < options.binaryContentTypes.size(); i++) {
-                if (ctype.toLowerCase().contains(options.binaryContentTypes.getString(i).toLowerCase())) {
+                if (ctype.toLowerCase(Locale.ROOT).contains(options.binaryContentTypes.getString(i).toLowerCase(Locale.ROOT))) {
                     isCustomBinary = true;
                     break;
                 }
@@ -720,13 +754,13 @@ public class ReactNativeBlobUtilReq extends BroadcastReceiver implements Runnabl
     private String getHeaderIgnoreCases(Headers headers, String field) {
         String val = headers.get(field);
         if (val != null) return val;
-        return headers.get(field.toLowerCase()) == null ? "" : headers.get(field.toLowerCase());
+        return headers.get(field.toLowerCase(Locale.ROOT)) == null ? "" : headers.get(field.toLowerCase(Locale.ROOT));
     }
 
     private String getHeaderIgnoreCases(HashMap<String, String> headers, String field) {
         String val = headers.get(field);
         if (val != null) return val;
-        String lowerCasedValue = headers.get(field.toLowerCase());
+        String lowerCasedValue = headers.get(field.toLowerCase(Locale.ROOT));
         return lowerCasedValue == null ? "" : lowerCasedValue;
     }
 

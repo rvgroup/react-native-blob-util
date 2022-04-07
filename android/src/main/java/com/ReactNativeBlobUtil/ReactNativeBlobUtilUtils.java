@@ -1,11 +1,17 @@
 package com.ReactNativeBlobUtil;
 
+import android.net.Uri;
+import android.util.Base64;
+
+import com.ReactNativeBlobUtil.Utils.PathResolver;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.cert.CertificateException;
+import java.util.Locale;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -30,7 +36,7 @@ public class ReactNativeBlobUtilUtils {
             StringBuilder sb = new StringBuilder();
 
             for (byte b : digest) {
-                sb.append(String.format("%02x", b & 0xff));
+                sb.append(String.format(Locale.ROOT, "%02x", b & 0xff));
             }
 
             result = sb.toString();
@@ -75,7 +81,7 @@ public class ReactNativeBlobUtilUtils {
             // Install the all-trusting trust manager
             final SSLContext sslContext = SSLContext.getInstance("SSL");
             sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-            // Create an ssl socket factory with our all-trusting manager
+            // Create an ssl socLket factory with our all-trusting manager
             final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
 
             OkHttpClient.Builder builder = client.newBuilder();
@@ -91,5 +97,54 @@ public class ReactNativeBlobUtilUtils {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * String to byte converter method
+     *
+     * @param data     Raw data in string format
+     * @param encoding Decoder name
+     * @return Converted data byte array
+     */
+    public static byte[] stringToBytes(String data, String encoding) {
+        if (encoding.equalsIgnoreCase("ascii")) {
+            return data.getBytes(Charset.forName("US-ASCII"));
+        } else if (encoding.toLowerCase(Locale.ROOT).contains("base64")) {
+            return Base64.decode(data, Base64.NO_WRAP);
+
+        } else if (encoding.equalsIgnoreCase("utf8")) {
+            return data.getBytes(Charset.forName("UTF-8"));
+        }
+        return data.getBytes(Charset.forName("US-ASCII"));
+    }
+
+    /**
+     * Normalize the path, remove URI scheme (xxx://) so that we can handle it.
+     *
+     * @param path URI string.
+     * @return Normalized string
+     */
+    public static String normalizePath(String path) {
+        if (path == null)
+            return null;
+        if (!path.matches("\\w+\\:.*"))
+            return path;
+        if (path.startsWith("file://")) {
+            return path.replace("file://", "");
+        }
+
+        Uri uri = Uri.parse(path);
+        if (path.startsWith(ReactNativeBlobUtilConst.FILE_PREFIX_BUNDLE_ASSET)) {
+            return path;
+        } else
+            return PathResolver.getRealPathFromURI(ReactNativeBlobUtil.RCTContext, uri);
+    }
+
+    public static boolean isAsset(String path) {
+        return path != null && path.startsWith(ReactNativeBlobUtilConst.FILE_PREFIX_BUNDLE_ASSET);
+    }
+
+    public static boolean isContentUri(String path) {
+        return path != null && path.startsWith(ReactNativeBlobUtilConst.FILE_PREFIX_CONTENT);
     }
 }

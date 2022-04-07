@@ -3,7 +3,7 @@ import fs from "../fs";
 import Blob from "../polyfill/Blob";
 import ReactNativeBlobUtilSession from "./ReactNativeBlobUtilSession";
 import URIUtil from "../utils/uri";
-
+import base64 from "base-64";
 /**
  * ReactNativeBlobUtil response object class.
  */

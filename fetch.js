@@ -259,7 +259,7 @@ export function fetch(...args: any): Promise {
                 if (options.path || options.fileCache || options.addAndroidDownloads
                     || options.key || options.auto && respInfo.respType === 'blob') {
                     if (options.session)
-                        session(options.session).add(data);
+                        fs.session(options.session).add(data);
                 }
                 respInfo.rnfbEncode = rawType;
                 resolve(new FetchBlobResponse(taskId, respInfo, data));

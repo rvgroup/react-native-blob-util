@@ -6,6 +6,7 @@ import {AppState, DeviceEventEmitter, NativeModules, Platform,} from 'react-nati
 
 //import StatefulPromise from './class/StatefulPromise.js'
 import fs from './fs';
+import MediaCollection from './mediacollection';
 import base64 from 'base-64';
 import polyfill from './polyfill';
 import android from './android';
@@ -69,4 +70,5 @@ export default {
     wrap,
     polyfill,
     JSONStream,
+    MediaCollection
 };

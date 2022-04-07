@@ -76,6 +76,7 @@ RCT_EXPORT_MODULE();
              @"MovieDir" : [ReactNativeBlobUtilFS getMovieDir],
              @"MusicDir" : [ReactNativeBlobUtilFS getMusicDir],
              @"PictureDir" : [ReactNativeBlobUtilFS getPictureDir],
+             @"ApplicationSupportDir" : [ReactNativeBlobUtilFS getApplicationSupportDir],
              };
 }
 
@@ -251,9 +252,9 @@ RCT_EXPORT_METHOD(exists:(NSString *)path callback:(RCTResponseSenderBlock)callb
 }
 
 #pragma mark - fs.writeFile
-RCT_EXPORT_METHOD(writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_METHOD(writeFile:(NSString *)path encoding:(NSString *)encoding data:(NSString *)data transformFile:(BOOL)transformFile append:(BOOL)append resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
-    [ReactNativeBlobUtilFS writeFile:path encoding:[NSString stringWithString:encoding] data:data append:append resolver:resolve rejecter:reject];
+    [ReactNativeBlobUtilFS writeFile:path encoding:[NSString stringWithString:encoding] data:data transformFile:transformFile append:append resolver:resolve rejecter:reject];
 }
 
 #pragma mark - fs.writeArray
@@ -493,11 +494,12 @@ RCT_EXPORT_METHOD(mkdir:(NSString *)path resolver:(RCTPromiseResolveBlock)resolv
 #pragma mark - fs.readFile
 RCT_EXPORT_METHOD(readFile:(NSString *)path
                   encoding:(NSString *)encoding
+                  transformFile:(BOOL) transformFile
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     
-    [ReactNativeBlobUtilFS readFile:path encoding:encoding onComplete:^(NSData * content, NSString * code, NSString * err) {
+    [ReactNativeBlobUtilFS readFile:path encoding:encoding transformFile:transformFile onComplete:^(NSData * content, NSString * code, NSString * err) {
         if(err != nil) {
             reject(code, err, nil);
             return;
@@ -535,7 +537,7 @@ RCT_EXPORT_METHOD(readStream:(NSString *)path withEncoding:(NSString *)encoding 
     });
 }
 
-#pragma mark - fs.getEnvionmentDirs
+#pragma mark - fs.getEnvironmentDirs
 RCT_EXPORT_METHOD(getEnvironmentDirs:(RCTResponseSenderBlock) callback)
 {
 

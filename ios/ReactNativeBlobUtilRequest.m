@@ -10,6 +10,7 @@
 
 #import "ReactNativeBlobUtilFS.h"
 #import "ReactNativeBlobUtilConst.h"
+#import "ReactNativeBlobUtilFileTransformer.h"
 #import "ReactNativeBlobUtilReqBuilder.h"
 
 #import "IOS7Polyfill.h"
@@ -155,6 +156,12 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
             destPath = path;
         } else {
             destPath = [ReactNativeBlobUtilFS getTempPath:cacheKey withExtension:[self.options valueForKey:CONFIG_FILE_EXT]];
+        }
+
+        // We still need to initialize this as a placeholder in memory before we perform
+        // the conversion
+        if ([self ShouldTransformFile]) {
+            respData = [[NSMutableData alloc] init];
         }
     } else {
         respData = [[NSMutableData alloc] init];
@@ -333,7 +340,9 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
         chunkString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
     }
 
-    if (respFile) {
+    // If we need to process the data, we defer writing into the file until the we have all the data, at which point
+    // we can perform the processing and then write into the file
+    if (respFile && ![self ShouldTransformFile]) {
         [writeStream write:[data bytes] maxLength:[data length]];
     } else {
         [respData appendData:data];
@@ -390,6 +399,22 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     }
 
     if (respFile) {
+        if ([self ShouldTransformFile]) {
+            // At this point, we have the data that we deferred to write into a file. We can now
+            // perform the conversion and write the converted data into the file.
+            NSObject<FileTransformer>* fileTransformer = [ReactNativeBlobUtilFileTransformer getFileTransformer];
+            if (!fileTransformer) {
+                errMsg = @"Transform file specified but file transfomer not set";
+            } else {
+                @try{
+                    NSData* transformedData = [fileTransformer onWriteFile:respData];
+                    [writeStream write:[transformedData bytes] maxLength:[transformedData length]];
+                } @catch(NSException * ex)
+                {
+                    errMsg = [NSString stringWithFormat:@"Exception on File Transformer: '%@' ", [ex description]];
+                }
+            }
+        }
         [writeStream close];
         rnfbRespType = RESP_TYPE_PATH;
         respStr = destPath;
@@ -428,6 +453,10 @@ typedef NS_ENUM(NSUInteger, ResponseFormat) {
     receivedBytes = 0;
     [session finishTasksAndInvalidate];
 
+}
+
+- (BOOL) ShouldTransformFile{
+    return [[options valueForKey:CONFIG_TRANSFORM_FILE] boolValue];
 }
 
 // upload progress handler
