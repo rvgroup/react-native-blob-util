@@ -69,11 +69,11 @@ public class ReactNativeBlobUtilMediaCollection {
             if (mt == MediaType.Download) return Environment.DIRECTORY_DOWNLOADS;
             return Environment.DIRECTORY_DOWNLOADS;
         } else {
-            if (mt == MediaType.Audio) return ReactNativeBlobUtilFS.getExternalFilesDirPath(ctx, Environment.DIRECTORY_MUSIC);
-            if (mt == MediaType.Video) return ReactNativeBlobUtilFS.getExternalFilesDirPath(ctx, Environment.DIRECTORY_MOVIES);
-            if (mt == MediaType.Image) return ReactNativeBlobUtilFS.getExternalFilesDirPath(ctx, Environment.DIRECTORY_PICTURES);
-            if (mt == MediaType.Download) return ReactNativeBlobUtilFS.getExternalFilesDirPath(ctx, Environment.DIRECTORY_DOWNLOADS);
-            return ReactNativeBlobUtilFS.getExternalFilesDirPath(ctx, Environment.DIRECTORY_DOWNLOADS);
+            if (mt == MediaType.Audio) return ReactNativeBlobUtilFS.getLegacySystemfolders(ctx).get("LegacyMusicDir").toString();
+            if (mt == MediaType.Video) return ReactNativeBlobUtilFS.getLegacySystemfolders(ctx).get("LegacyMovieDir").toString();
+            if (mt == MediaType.Image) return ReactNativeBlobUtilFS.getLegacySystemfolders(ctx).get("LegacyPictureDir").toString();
+            if (mt == MediaType.Download) return ReactNativeBlobUtilFS.getLegacySystemfolders(ctx).get("LegacyDownloadDir").toString();
+            return ReactNativeBlobUtilFS.getLegacySystemfolders(ctx).get("LegacyDownloadDir").toString();
         }
     }
 

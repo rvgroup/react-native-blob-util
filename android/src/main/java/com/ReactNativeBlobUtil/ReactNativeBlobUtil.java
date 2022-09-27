@@ -28,6 +28,7 @@ import com.facebook.react.modules.network.ForwardingCookieHandler;
 import com.facebook.react.modules.network.OkHttpClientProvider;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -88,7 +89,11 @@ public class ReactNativeBlobUtil extends ReactContextBaseJavaModule {
 
     @Override
     public Map<String, Object> getConstants() {
-        return ReactNativeBlobUtilFS.getSystemfolders(this.getReactApplicationContext());
+        Map<String, Object> res = new HashMap<>();
+        res.putAll(ReactNativeBlobUtilFS.getSystemfolders(this.getReactApplicationContext()));
+        res.putAll(ReactNativeBlobUtilFS.getLegacySystemfolders(this.getReactApplicationContext()));
+
+        return res;
     }
 
     @ReactMethod
@@ -440,7 +445,7 @@ public class ReactNativeBlobUtil extends ReactContextBaseJavaModule {
     @ReactMethod
     public void writeToMediaFile(String fileUri, String path, boolean transformFile, Promise promise) {
         boolean res = ReactNativeBlobUtilMediaCollection.writeToMediaFile(Uri.parse(fileUri), path, transformFile, promise);
-        if(res) promise.resolve("Success");
+        if (res) promise.resolve("Success");
     }
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
@@ -479,7 +484,7 @@ public class ReactNativeBlobUtil extends ReactContextBaseJavaModule {
         }
 
         boolean res = ReactNativeBlobUtilMediaCollection.writeToMediaFile(fileuri, path, false, promise);
-        if(res) promise.resolve(fileuri.toString());
+        if (res) promise.resolve(fileuri.toString());
     }
 
 }

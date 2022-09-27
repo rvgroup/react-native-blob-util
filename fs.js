@@ -24,7 +24,15 @@ const dirs = {
     SDCardApplicationDir: ReactNativeBlobUtil.SDCardApplicationDir, // Deprecated
     MainBundleDir: ReactNativeBlobUtil.MainBundleDir,
     LibraryDir: ReactNativeBlobUtil.LibraryDir,
-  ApplicationSupportDir: ReactNativeBlobUtil.ApplicationSupportDir
+    ApplicationSupportDir: ReactNativeBlobUtil.ApplicationSupportDir,
+
+    LegacyPictureDir: ReactNativeBlobUtil.LegacyPictureDir,
+    LegacyMusicDir: ReactNativeBlobUtil.LegacyMusicDir,
+    LegacyMovieDir: ReactNativeBlobUtil.LegacyMovieDir,
+    LegacyDownloadDir: ReactNativeBlobUtil.LegacyDownloadDir,
+    LegacyDCIMDir: ReactNativeBlobUtil.LegacyDCIMDir,
+    LegacySDCardDir: ReactNativeBlobUtil.LegacySDCardDir, // Depracated
+
 };
 
 function addCode(code: string, error: Error): Error {

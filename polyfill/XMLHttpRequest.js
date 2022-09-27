@@ -170,6 +170,12 @@ export default class XMLHttpRequest extends XMLHttpRequestEventTarget {
         log.verbose('sending request with args', _method, _url, _headers, body);
         log.verbose(typeof body, body instanceof FormData);
 
+        if (body instanceof FormData) {
+            log.debug('creating blob and setting header from FormData instance');
+            body = new Blob(body);
+            this._headers['Content-Type'] = `multipart/form-data; boundary=${body.multipartBoundary}`;
+        }
+
         if (body instanceof Blob) {
             log.debug('sending blob body', body._blobCreated);
             promise = new Promise((resolve, reject) => {

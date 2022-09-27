@@ -11,7 +11,6 @@
 #import "ReactNativeBlobUtilFS.h"
 #import "ReactNativeBlobUtilConst.h"
 #import "ReactNativeBlobUtilFileTransformer.h"
-#import "IOS7Polyfill.h"
 @import AssetsLibrary;
 
 #import <CommonCrypto/CommonDigest.h>
@@ -381,7 +380,7 @@ NSMutableDictionary *fileStreams = nil;
 
         NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:path];
         NSData * content = nil;
-        if([encoding RNFBContainsString:@"base64"]) {
+        if([encoding containsString:@"base64"]) {
             content = [[NSData alloc] initWithBase64EncodedString:data options:0];
         }
         else if([encoding isEqualToString:@"uri"]) {

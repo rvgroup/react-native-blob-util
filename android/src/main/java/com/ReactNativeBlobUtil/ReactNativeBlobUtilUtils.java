@@ -10,7 +10,6 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
-import java.security.cert.CertificateException;
 import java.util.Locale;
 
 import javax.net.ssl.HostnameVerifier;
@@ -22,8 +21,9 @@ import javax.net.ssl.X509TrustManager;
 
 import okhttp3.OkHttpClient;
 
-
 public class ReactNativeBlobUtilUtils {
+
+    public static X509TrustManager sharedTrustManager;
 
     public static String getMD5(String input) {
         String result = null;
@@ -61,22 +61,10 @@ public class ReactNativeBlobUtilUtils {
 
     public static OkHttpClient.Builder getUnsafeOkHttpClient(OkHttpClient client) {
         try {
-            // Create a trust manager that does not validate certificate chains
-            final X509TrustManager x509TrustManager = new X509TrustManager() {
-                @Override
-                public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
-                }
 
-                @Override
-                public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
-                }
+            if (sharedTrustManager == null) throw new IllegalStateException("Use of own trust manager but none defined");
 
-                @Override
-                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                    return new java.security.cert.X509Certificate[]{};
-                }
-            };
-            final TrustManager[] trustAllCerts = new TrustManager[]{x509TrustManager};
+            final TrustManager[] trustAllCerts = new TrustManager[]{sharedTrustManager};
 
             // Install the all-trusting trust manager
             final SSLContext sslContext = SSLContext.getInstance("SSL");
@@ -85,7 +73,7 @@ public class ReactNativeBlobUtilUtils {
             final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
 
             OkHttpClient.Builder builder = client.newBuilder();
-            builder.sslSocketFactory(sslSocketFactory, x509TrustManager);
+            builder.sslSocketFactory(sslSocketFactory, sharedTrustManager);
             builder.hostnameVerifier(new HostnameVerifier() {
                 @Override
                 public boolean verify(String hostname, SSLSession session) {

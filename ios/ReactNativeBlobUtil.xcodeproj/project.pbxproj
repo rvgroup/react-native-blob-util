@@ -48,7 +48,6 @@
 		A19B48241D98102400E6868A /* ReactNativeBlobUtilProgress.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ReactNativeBlobUtilProgress.m; sourceTree = "<group>"; };
 		A1AAE2971D300E3E0051D11C /* ReactNativeBlobUtilReqBuilder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReactNativeBlobUtilReqBuilder.h; sourceTree = "<group>"; };
 		A1AAE2981D300E4D0051D11C /* ReactNativeBlobUtilReqBuilder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ReactNativeBlobUtilReqBuilder.m; sourceTree = "<group>"; };
-		A1F950181D7E9134002A95A6 /* IOS7Polyfill.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOS7Polyfill.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,7 +75,6 @@
 				9FD8D3C126F1709A00009F35 /* ReactNativeBlobUtilFileTransformer.h */,
 				A19B48241D98102400E6868A /* ReactNativeBlobUtilProgress.m */,
 				A19B48231D98100800E6868A /* ReactNativeBlobUtilProgress.h */,
-				A1F950181D7E9134002A95A6 /* IOS7Polyfill.h */,
 				A1AAE2981D300E4D0051D11C /* ReactNativeBlobUtilReqBuilder.m */,
 				A1AAE2971D300E3E0051D11C /* ReactNativeBlobUtilReqBuilder.h */,
 				A158F42E1D0539CE006FFD38 /* ReactNativeBlobUtilNetwork.h */,

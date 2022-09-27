@@ -165,7 +165,7 @@ If you are going to use the `wifiOnly` flag, you need to add this to `AndroidMan
 
 **Grant Access Permission for Android 6.0**
 
-Beginning in Android 6.0 (API level 23), users grant permissions to apps while the app is running, not when they install the app. So adding permissions in `AndroidManifest.xml` won't work for Android 6.0+ devices. To grant permissions in runtime, you might use [PermissionAndroid API](https://facebook.github.io/react-native/docs/permissionsandroid.html).
+Beginning in Android 6.0 (API level 23), users grant permissions to apps while the app is running, not when they install the app. So adding permissions in `AndroidManifest.xml` won't work for Android 6.0+ devices. To grant permissions in runtime, you might use [PermissionAndroid API](https://facebook.github.io/react-native/docs/permissionsandroid).
 
 ## Usage
 
@@ -908,6 +908,30 @@ ReactNativeBlobUtil.fetch('POST', 'http://example.com/upload', {'Transfer-Encodi
 ### Self-Signed SSL Server
 
 By default, react-native-blob-util does NOT allow connection to unknown certification provider since it's dangerous. To connect a server with self-signed certification, you need to add `trusty` to `config` explicitly. This function is available for version >= `0.5.3`
+In addition since ``0.16.0`` you'll have to define your own trust manager for android.
+````java
+public class MainApplication extends Application implements ReactApplication {
+    ...
+    @Override
+    public void onCreate() {
+       ...
+        ReactNativeBlobUtilUtils.sharedTrustManager = final X509TrustManager x509TrustManager = new X509TrustManager() {
+                @Override
+                public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+                }
+
+                @Override
+                public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+                }
+
+                @Override
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return new java.security.cert.X509Certificate[]{};
+                }
+        };
+        ...
+    }
+````
 
 ```js
 ReactNativeBlobUtil.config({
